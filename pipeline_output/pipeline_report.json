@@ -1,0 +1,48 @@
+{
+  "deployment_info": {
+    "timestamp": "2025-09-10T16:10:51.390182",
+    "input_file": "geyser.csv",
+    "output_directory": "pipeline_output"
+  },
+  "pipeline_steps": [
+    {
+      "step": "Load CSV",
+      "input_rows": "Unknown (raw file)",
+      "output_rows": 272,
+      "removed_rows": "N/A",
+      "reason": "Skipped 30 comment lines, handled comments with \"#\""
+    },
+    {
+      "step": "Clean Data",
+      "input_rows": 272,
+      "output_rows": 267,
+      "removed_rows": 5,
+      "reason": "Removed 3 alphanumeric entries, removed 1 missing values, removed 1 logical violations"
+    }
+  ],
+  "deployment_steps": [
+    {
+      "step": "Load CSV",
+      "output_rows": 272,
+      "message": "Data loaded successfully",
+      "timestamp": "2025-09-10T16:10:51.382792"
+    },
+    {
+      "step": "Clean Data",
+      "output_rows": 267,
+      "message": "Data cleaned successfully",
+      "timestamp": "2025-09-10T16:10:51.386453"
+    },
+    {
+      "step": "Validate Data",
+      "output_rows": 267,
+      "message": "Data validated successfully",
+      "timestamp": "2025-09-10T16:10:51.390169"
+    }
+  ],
+  "data_summary": {
+    "initial_rows": 272,
+    "final_rows": 267,
+    "total_removed": 5
+  }
+}

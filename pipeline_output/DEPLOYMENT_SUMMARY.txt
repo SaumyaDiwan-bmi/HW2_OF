@@ -1,0 +1,30 @@
+
+CSV DATA PIPELINE DEPLOYMENT SUMMARY
+====================================
+
+Deployment Time: 2025-09-10 16:10:56
+Input File: geyser.csv
+Output Directory: pipeline_output
+
+PIPELINE STATISTICS:
+
+  Initial Rows: 272
+  Final Rows: 267
+  Total Removed: 5
+  Retention Rate: 98.2%
+
+
+GENERATED FILES:
+  📊 Reports: pipeline_report.json, pipeline_report.txt
+  📈 Visualizations: plots/ directory, periodicity_analysis.png
+  🎨 Diagrams: pipeline_diagram.mmd
+  💾 Data: cleaned_data.csv
+  🌐 Web: visualizations_index.html
+
+NEXT STEPS:
+  1. Review the pipeline_report.txt for detailed analysis
+  2. Open visualizations_index.html in a browser
+  3. Use the generated Mermaid diagrams in documentation
+  4. Import cleaned data using your preferred format
+
+For questions or issues, check the pipeline_report.json for detailed logs.

@@ -1,0 +1,20 @@
+CSV DATA PREPROCESSING PIPELINE REPORT
+==================================================
+
+Generated: 2025-09-10 16:10:51
+Input file: geyser.csv
+
+PIPELINE STEPS:
+------------------------------
+Step: Load CSV
+  Input rows: Unknown (raw file)
+  Output rows: 272
+  Removed: N/A
+  Reason: Skipped 30 comment lines, handled comments with "#"
+
+Step: Clean Data
+  Input rows: 272
+  Output rows: 267
+  Removed: 5
+  Reason: Removed 3 alphanumeric entries, removed 1 missing values, removed 1 logical violations
+

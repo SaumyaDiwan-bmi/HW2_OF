@@ -1,0 +1,33 @@
+graph TD
+    A["📁 Raw CSV File<br/>📊 Total Lines: 305"]
+    A --> B
+    B["🔄 Skip Comments<br/>📊 Input: 305<br/>📤 Output: 275"]
+    B --> C
+    removed_comments["🗑️ Comment Lines<br/>Removed: 30<br/>Lines 1-30"]
+    B -.-> removed_comments
+    C["🔄 Remove Alphanumeric Entries<br/>📊 Input: 275<br/>📤 Output: 272"]
+    C --> D
+    removed_alphanumeric["🗑️ Alphanumeric Entries<br/>Removed: 3<br/>Rows with letters in numbers"]
+    C -.-> removed_alphanumeric
+    D["🔄 Handle Missing Values<br/>📊 Input: 272<br/>📤 Output: 271"]
+    D --> E
+    removed_missing["🗑️ Missing Values<br/>Removed: 1<br/>NaN values"]
+    D -.-> removed_missing
+    E["🔄 Validate Logical Constraints<br/>📊 Input: 271<br/>📤 Output: 270"]
+    E --> F
+    removed_logical["🗑️ Logical Violations<br/>Removed: 1<br/>eruption_time > waiting_time"]
+    E -.-> removed_logical
+    F["✅ Final Clean Dataset<br/>📊 Rows: 270<br/>🗑️ Total Removed: 5<br/>📈 Retention: 98.2%"]
+
+    style A fill:#1976d2,stroke:#0d47a1,stroke-width:3px,color:#ffffff
+    style B fill:#388e3c,stroke:#1b5e20,stroke-width:3px,color:#ffffff
+    style B fill:#388e3c,stroke:#1b5e20,stroke-width:3px,color:#ffffff
+    style C fill:#388e3c,stroke:#1b5e20,stroke-width:3px,color:#ffffff
+    style D fill:#388e3c,stroke:#1b5e20,stroke-width:3px,color:#ffffff
+    style E fill:#388e3c,stroke:#1b5e20,stroke-width:3px,color:#ffffff
+    style F fill:#4caf50,stroke:#1b5e20,stroke-width:4px,color:#ffffff
+    style removed_comments fill:#d32f2f,stroke:#b71c1c,stroke-width:2px,color:#ffffff
+    style removed_alphanumeric fill:#d32f2f,stroke:#b71c1c,stroke-width:2px,color:#ffffff
+    style removed_missing fill:#d32f2f,stroke:#b71c1c,stroke-width:2px,color:#ffffff
+    style removed_logical fill:#d32f2f,stroke:#b71c1c,stroke-width:2px,color:#ffffff
+    style removed_alphanumeric fill:#d32f2f,stroke:#b71c1c,stroke-width:2px,color:#ffffff
