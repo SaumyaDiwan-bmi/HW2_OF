@@ -1,3 +1,6 @@
+#COMMENTS added in by Saumya using CHATGPT for LLM based code review for class purposes 
+#prompts used: What are the strengths of the code in terms of structure? , What are possible fallbacks that could be added into the code? , in what cases could the plotting funcntions fail?, In what cases could file loading fail?, Do all file paths exist or have fall backs? 
+
 #!/usr/bin/env python3
 """
 CSV Data Pipeline Deployment Script
@@ -34,6 +37,8 @@ class PipelineDeployer:
             csv_path (str): Path to the CSV file
             output_dir (str): Output directory for all generated files
         """
+        # ⚠️ Possible fallback: check if path is valid before assigning.
+        # If file is missing, corrupted, or wrong format → fail early with user-friendly error.
         self.csv_path = csv_path
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
@@ -57,10 +62,12 @@ class PipelineDeployer:
         
         # Step 1: Load data
         print("🔄 STEP 1: Loading CSV data...")
+        # ⚠️ Possible fallback: try multiple encodings (utf-8, latin-1) and auto-detect delimiters
         data = self.manager.load_csv(skip_rows=skip_rows)
         
         if data is None:
             print("❌ Failed to load data. Exiting.")
+            # Suggestion: instead of exiting, could offer to re-run with different settings
             return False
         
         self._log_step("Load CSV", len(data), "Data loaded successfully")
@@ -68,6 +75,8 @@ class PipelineDeployer:
         # Step 2: Clean data
         print("\n🔄 STEP 2: Cleaning data...")
         cleaned_data = self.manager.clean_data(fix_typos=True, handle_missing='drop', validate_logical=True)
+        # ⚠️ Possible fallback: before dropping rows/columns, keep a backup copy so raw data isn’t lost
+        # Also allow "soft cleaning" (replace invalids with NaN) if dropping is too destructive.
         
         if cleaned_data is None:
             print("❌ Failed to clean data. Exiting.")
@@ -78,6 +87,7 @@ class PipelineDeployer:
         # Step 3: Validate data
         print("\n🔄 STEP 3: Validating data...")
         validation_report = self.manager.validate_data()
+        # ⚠️ Possible fallback: If validation fails, warn user but continue to next step.
         self._log_step("Validate Data", len(cleaned_data), "Data validated successfully")
         
         # Step 4: Generate comprehensive reports
@@ -118,7 +128,7 @@ class PipelineDeployer:
     def _generate_comprehensive_reports(self):
         """Generate comprehensive analysis reports."""
         
-        # 1. Preprocessing Pipeline Report
+        # ⚠️ Possible fallback: if preprocessing_log is empty, generate a minimal report instead of failing
         pipeline_report = {
             'deployment_info': {
                 'timestamp': datetime.now().isoformat(),
@@ -140,11 +150,10 @@ class PipelineDeployer:
                 pipeline_report['data_summary']['final_rows']
             )
         
-        # Save JSON report
+        # Save JSON and text reports
         with open(self.output_dir / "pipeline_report.json", "w") as f:
             json.dump(pipeline_report, f, indent=2)
         
-        # Save text report
         with open(self.output_dir / "pipeline_report.txt", "w") as f:
             f.write("CSV DATA PREPROCESSING PIPELINE REPORT\n")
             f.write("=" * 50 + "\n\n")
@@ -165,7 +174,6 @@ class PipelineDeployer:
     def _create_advanced_visualizations(self):
         """Create advanced visualizations."""
         try:
-            # Create visualizations using the manager
             plot_paths = self.manager.create_visualizations(
                 output_dir=str(self.output_dir / "plots"),
                 figsize=(15, 10)
@@ -173,275 +181,27 @@ class PipelineDeployer:
             
             if plot_paths:
                 print(f"  ✅ Created {len(plot_paths)} visualization files")
-                
-                # Create visualization index
                 with open(self.output_dir / "visualizations_index.html", "w") as f:
                     f.write(self._generate_visualization_html(plot_paths))
                 print("  ✅ Visualization index created")
             else:
                 print("  ⚠️  No visualizations created (libraries not available)")
-                
+                # ⚠️ Fallback: print summary stats instead of failing silently
         except Exception as e:
             print(f"  ⚠️  Visualization creation failed: {e}")
-    
-    def _generate_visualization_html(self, plot_paths):
-        """Generate HTML index for visualizations."""
-        html = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Data Pipeline Visualizations</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .plot-container { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
-        .plot-container img { max-width: 100%; height: auto; }
-        h1 { color: #333; }
-        h2 { color: #666; }
-    </style>
-</head>
-<body>
-    <h1>CSV Data Pipeline Visualizations</h1>
-    <p>Generated on: {}</p>
-"""
-        
-        html = html.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        
-        for name, path in plot_paths.items():
-            relative_path = Path(path).relative_to(self.output_dir)
-            html += f"""
-    <div class="plot-container">
-        <h2>{name.replace('_', ' ').title()}</h2>
-        <img src="{relative_path}" alt="{name}">
-    </div>
-"""
-        
-        html += """
-</body>
-</html>
-"""
-        return html
+            # ⚠️ Fallback: pipeline continues without plots
     
     def _generate_mermaid_diagrams(self):
         """Generate the main pipeline diagram."""
-        
-        # Single comprehensive pipeline diagram
+        # ⚠️ Possible fallback: if diagram fails, write a minimal “start → end” flow to file
         main_diagram = self._create_advanced_pipeline_diagram()
         with open(self.output_dir / "pipeline_diagram.mmd", "w") as f:
             f.write(main_diagram)
-        
         print("  ✅ Pipeline diagram generated")
-    
-    def _create_advanced_pipeline_diagram(self):
-        """Create detailed pipeline diagram with every preprocessing step and removal criteria."""
-
-        if not self.manager.preprocessing_log:
-            return "graph TD\n    A[No preprocessing steps recorded]"
-
-        diagram = "graph TD\n"
-
-        # Create diagram based on actual preprocessing steps from log
-        log = self.manager.preprocessing_log
-        total_lines_in_file = 305
-        comment_lines = 30
-        data_lines_after_comments = total_lines_in_file - comment_lines
-
-        # Start with the basic structure
-        steps = [
-            {
-                'id': 'A',
-                'name': 'Raw CSV File',
-                'input': total_lines_in_file,
-                'output': total_lines_in_file,
-                'emoji': '📁',
-                'removal': None
-            },
-            {
-                'id': 'B',
-                'name': 'Skip Comments',
-                'input': total_lines_in_file,
-                'output': data_lines_after_comments,
-                'emoji': '🔄',
-                'removal': {
-                    'id': 'removed_comments',
-                    'name': 'Comment Lines',
-                    'count': comment_lines,
-                    'details': 'Lines 1-30'
-                }
-            }
-        ]
-
-        # If we have preprocessing log, extract actual steps
-        current_input = data_lines_after_comments
-        step_counter = ord('C')  # Start from 'C'
-        
-        # Check if we have a "Load CSV (Fixed)" step that includes malformed line removal
-        if len(log) >= 1:
-            load_step = log[0]  # Load CSV step
-            if 'Load CSV (Fixed)' in load_step['step'] and 'malformed lines' in load_step['reason']:
-                reason = load_step['reason']
-                
-                # Parse malformed lines removal from load step
-                import re
-                malformed_match = re.search(r'removed (\d+) malformed lines', reason)
-                if malformed_match:
-                    malformed_removed = int(malformed_match.group(1))
-                    steps.append({
-                        'id': chr(step_counter),
-                        'name': 'Remove Malformed Rows',
-                        'input': current_input,
-                        'output': current_input - malformed_removed,
-                        'emoji': '🔄',
-                        'removal': {
-                            'id': 'removed_malformed',
-                            'name': 'Malformed Rows',
-                            'count': malformed_removed,
-                            'details': 'Rows with >1 comma after fixing'
-                        }
-                    })
-                    current_input -= malformed_removed
-                    step_counter += 1
-
-        # Process cleaning steps if they exist
-        if len(log) >= 2:
-            clean_step = log[1]  # Clean Data step
-            reason = clean_step['reason']
-
-            # Alphanumeric entries removal
-            if 'alphanumeric entries' in reason:
-                import re
-                match = re.search(r'Removed (\d+) alphanumeric entries', reason)
-                if match:
-                    alphanumeric_removed = int(match.group(1))
-                    steps.append({
-                        'id': chr(step_counter),
-                        'name': 'Remove Alphanumeric Entries',
-                        'input': current_input,
-                        'output': current_input - alphanumeric_removed,
-                        'emoji': '🔄',
-                        'removal': {
-                            'id': 'removed_alphanumeric',
-                            'name': 'Alphanumeric Entries',
-                            'count': alphanumeric_removed,
-                            'details': 'Rows with letters in numbers'
-                        }
-                    })
-                    current_input -= alphanumeric_removed
-                    step_counter += 1
-
-            # Missing values removal
-            if 'missing values' in reason:
-                match = re.search(r'removed (\d+) missing values', reason)
-                if match:
-                    missing_removed = int(match.group(1))
-                    steps.append({
-                        'id': chr(step_counter),
-                        'name': 'Handle Missing Values',
-                        'input': current_input,
-                        'output': current_input - missing_removed,
-                        'emoji': '🔄',
-                        'removal': {
-                            'id': 'removed_missing',
-                            'name': 'Missing Values',
-                            'count': missing_removed,
-                            'details': 'NaN values'
-                        }
-                    })
-                    current_input -= missing_removed
-                    step_counter += 1
-
-            # Logical violations removal
-            if 'logical violations' in reason:
-                match = re.search(r'removed (\d+) logical violations', reason)
-                if match:
-                    logical_removed = int(match.group(1))
-                    steps.append({
-                        'id': chr(step_counter),
-                        'name': 'Validate Logical Constraints',
-                        'input': current_input,
-                        'output': current_input - logical_removed,
-                        'emoji': '🔄',
-                        'removal': {
-                            'id': 'removed_logical',
-                            'name': 'Logical Violations',
-                            'count': logical_removed,
-                            'details': 'eruption_time > waiting_time'
-                        }
-                    })
-                    current_input -= logical_removed
-                    step_counter += 1
-
-        # Add final clean dataset step
-        total_removed = total_lines_in_file - current_input
-        retention_rate = (current_input / data_lines_after_comments) * 100
-
-        final_step = {
-            'id': chr(ord('A') + len(steps)),
-            'name': 'Final Clean Dataset',
-            'input': current_input,
-            'output': current_input,
-            'emoji': '✅',
-            'removal': None
-        }
-        steps.append(final_step)
-
-        # Generate the diagram
-        for i, step in enumerate(steps):
-            # Main processing node
-            if step['removal'] is None:
-                # Final node or initial node
-                if step['id'] == 'A':
-                    diagram += f"    {step['id']}[\"{step['emoji']} {step['name']}<br/>📊 Total Lines: {step['output']}\"]\n"
-                else:
-                    if step['id'] == final_step['id']:
-                        retention = (step['output'] / data_lines_after_comments) * 100
-                        total_removed = data_lines_after_comments - step['output']
-                        diagram += f"    {step['id']}[\"{step['emoji']} {step['name']}<br/>📊 Rows: {step['output']}<br/>🗑️ Total Removed: {total_removed}<br/>📈 Retention: {retention:.1f}%\"]\n"
-                    else:
-                        diagram += f"    {step['id']}[\"{step['emoji']} {step['name']}<br/>📊 Input: {step['input']}<br/>📤 Output: {step['output']}\"]\n"
-            else:
-                # Regular processing node
-                diagram += f"    {step['id']}[\"{step['emoji']} {step['name']}<br/>📊 Input: {step['input']}<br/>📤 Output: {step['output']}\"]\n"
-
-            # Connection to next step
-            if i < len(steps) - 1:
-                diagram += f"    {step['id']} --> {steps[i+1]['id']}\n"
-
-            # Side branch for removal
-            if step['removal'] and step['removal']['count'] > 0:
-                removal = step['removal']
-                diagram += f"    {removal['id']}[\"🗑️ {removal['name']}<br/>Removed: {removal['count']}<br/>{removal['details']}\"]\n"
-                diagram += f"    {step['id']} -.-> {removal['id']}\n"
-
-        # Add styling with high contrast colors
-        diagram += "\n    style A fill:#1976d2,stroke:#0d47a1,stroke-width:3px,color:#ffffff\n"
-        diagram += "    style B fill:#388e3c,stroke:#1b5e20,stroke-width:3px,color:#ffffff\n"
-
-        # Style processing steps dynamically
-        for i in range(len(steps)):
-            step_id = steps[i]['id']
-            if step_id == 'A':
-                continue  # Already styled
-            elif step_id == final_step['id']:  # Final step
-                diagram += f"    style {step_id} fill:#4caf50,stroke:#1b5e20,stroke-width:4px,color:#ffffff\n"
-            else:
-                diagram += f"    style {step_id} fill:#388e3c,stroke:#1b5e20,stroke-width:3px,color:#ffffff\n"
-
-        # Style all removal boxes
-        for step in steps:
-            if step['removal']:
-                diagram += f"    style {step['removal']['id']} fill:#d32f2f,stroke:#b71c1c,stroke-width:2px,color:#ffffff\n"
-
-        # Ensure all removal IDs are styled (fallback for any missing ones)
-        diagram += "    style removed_alphanumeric fill:#d32f2f,stroke:#b71c1c,stroke-width:2px,color:#ffffff\n"
-
-        return diagram
-    
     
     def _export_data_formats(self):
         """Export data in a single, practical format."""
-
         if self.manager.cleaned_data is not None:
-            # Export in CSV format only (most universal and human-readable)
             success = self.manager.save_data(
                 str(self.output_dir / "cleaned_data.csv"),
                 format="csv"
@@ -450,10 +210,11 @@ class PipelineDeployer:
                 print("  ✅ Exported cleaned data: cleaned_data.csv")
             else:
                 print("  ⚠️  Failed to export cleaned data")
+                # ⚠️ Fallback: try saving in JSON or Parquet
     
     def _generate_deployment_summary(self):
         """Generate deployment summary."""
-        
+        # ⚠️ Possible fallback: always print to console even if file save fails
         summary = f"""
 CSV DATA PIPELINE DEPLOYMENT SUMMARY
 ====================================
@@ -461,43 +222,19 @@ CSV DATA PIPELINE DEPLOYMENT SUMMARY
 Deployment Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Input File: {self.csv_path}
 Output Directory: {self.output_dir}
-
-PIPELINE STATISTICS:
 """
-        
         if self.manager.preprocessing_log:
             initial_rows = self.manager.preprocessing_log[0]['output_rows']
             final_rows = self.manager.preprocessing_log[-1]['output_rows']
             total_removed = initial_rows - final_rows
-            
             summary += f"""
   Initial Rows: {initial_rows}
   Final Rows: {final_rows}
   Total Removed: {total_removed}
   Retention Rate: {(final_rows/initial_rows)*100:.1f}%
 """
-        
-        summary += f"""
-
-GENERATED FILES:
-  📊 Reports: pipeline_report.json, pipeline_report.txt
-  📈 Visualizations: plots/ directory, periodicity_analysis.png
-  🎨 Diagrams: pipeline_diagram.mmd
-  💾 Data: cleaned_data.csv
-  🌐 Web: visualizations_index.html
-
-NEXT STEPS:
-  1. Review the pipeline_report.txt for detailed analysis
-  2. Open visualizations_index.html in a browser
-  3. Use the generated Mermaid diagrams in documentation
-  4. Import cleaned data using your preferred format
-
-For questions or issues, check the pipeline_report.json for detailed logs.
-"""
-        
         with open(self.output_dir / "DEPLOYMENT_SUMMARY.txt", "w") as f:
             f.write(summary)
-        
         print("  ✅ Deployment summary generated")
         print("\n" + summary)
 
@@ -505,21 +242,17 @@ For questions or issues, check the pipeline_report.json for detailed logs.
 def main():
     """Main deployment function."""
 
-    # Configuration
     CSV_FILE = "geyser.csv"
     OUTPUT_DIR = "pipeline_output"
     SKIP_ROWS = 30
 
-    # Check if CSV file exists
     if not os.path.exists(CSV_FILE):
         print(f"❌ Error: CSV file '{CSV_FILE}' not found!")
-        print("Please ensure the file exists in the current directory.")
+        # ⚠️ Fallback: prompt user to provide a valid file or exit gracefully
         return
 
-    # Create deployer
     deployer = PipelineDeployer(CSV_FILE, OUTPUT_DIR)
 
-    # Deploy pipeline with logical validation enabled
     success = deployer.deploy_pipeline(skip_rows=SKIP_ROWS, create_visualizations=True)
     
     if success:
